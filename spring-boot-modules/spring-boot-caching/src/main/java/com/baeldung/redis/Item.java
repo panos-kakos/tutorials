@@ -1,4 +1,4 @@
-package com.baeldung.caching.redis;
+package com.baeldung.redis;
 
 import java.io.Serializable;
 

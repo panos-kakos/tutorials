@@ -1,8 +1,9 @@
-package com.baeldung.caching.redis;
+package com.baeldung.redis;
 
-import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
