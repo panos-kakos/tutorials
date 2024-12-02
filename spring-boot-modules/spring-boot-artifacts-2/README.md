@@ -6,4 +6,5 @@ This module contains articles about configuring the Spring Boot build process 2.
 
 - [Difference Between spring-boot:repackage and Maven package](https://www.baeldung.com/spring-boot-repackage-vs-mvn-package)
 - [Fixing the No Main Manifest Attribute in Spring Boot](https://www.baeldung.com/spring-boot-fix-the-no-main-manifest-attribute)
+- [Injecting Git Information Into Spring](https://www.baeldung.com/spring-git-information)
 - More articles: [[<-- prev]](/spring-boot-modules/spring-boot-artifacts)
