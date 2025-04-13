@@ -1403,7 +1403,6 @@
                 <module>tablesaw</module> <!-- failing after upgrading to jdk17--> <!-- JAVA-42037 -->
                 <module>spring-swagger-codegen-modules/openapi-custom-generator</module>
                 <module>spring-swagger-codegen-modules/openapi-custom-generator-api-client</module> <!-- cannot add the individual modules here because the order is not guaranteed -->
-                <module>persistence-modules/spring-data-cassandra</module>   <!-- failing after upgrading to jdk17. JDK 17 compatibility in progress CASSANDRA-16895 --> <!-- JAVA-42047 -->
                 <module>language-interop</module>
                 <module>spring-scheduling</module> <!-- BAEL-8382 -->
                 <module>persistence-modules/spring-boot-persistence-mongodb</module> <!-- JAVA-42144 -->
@@ -1472,7 +1471,6 @@
                 <module>tablesaw</module> <!-- failing after upgrading to jdk17--> <!-- JAVA-42037 -->
                 <module>spring-swagger-codegen-modules/openapi-custom-generator</module>
                 <module>spring-swagger-codegen-modules/openapi-custom-generator-api-client</module> <!-- cannot add the individual modules here because the order is not guaranteed -->
-                <module>persistence-modules/spring-data-cassandra</module>   <!-- failing after upgrading to jdk17. JDK 17 compatibility in progress CASSANDRA-16895 --> <!-- JAVA-42047 -->
                 <module>language-interop</module>
                 <module>spring-scheduling</module> <!-- BAEL-8382 -->
                 <module>persistence-modules/spring-boot-persistence-mongodb</module> <!-- JAVA-42144 -->

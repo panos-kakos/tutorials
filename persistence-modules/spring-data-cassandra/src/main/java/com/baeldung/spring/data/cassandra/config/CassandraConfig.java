@@ -7,39 +7,61 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.data.cassandra.config.CassandraClusterFactoryBean;
-import org.springframework.data.cassandra.config.java.AbstractCassandraConfiguration;
-import org.springframework.data.cassandra.mapping.BasicCassandraMappingContext;
-import org.springframework.data.cassandra.mapping.CassandraMappingContext;
+
+import org.springframework.data.cassandra.config.CqlSessionFactoryBean;
+import org.springframework.data.cassandra.config.SchemaAction;
+import org.springframework.data.cassandra.config.SessionFactoryFactoryBean;
+import org.springframework.data.cassandra.core.convert.CassandraConverter;
+import org.springframework.data.cassandra.core.convert.MappingCassandraConverter;
+import org.springframework.data.cassandra.core.mapping.CassandraMappingContext;
+import org.springframework.data.cassandra.core.mapping.SimpleUserTypeResolver;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
+
+import com.datastax.oss.driver.api.core.CqlSession;
 
 @Configuration
 @PropertySource(value = { "classpath:cassandra.properties" })
 @EnableCassandraRepositories(basePackages = "com.baeldung.spring.data.cassandra.repository")
-public class CassandraConfig extends AbstractCassandraConfiguration {
+public class CassandraConfig{
     private static final Log LOGGER = LogFactory.getLog(CassandraConfig.class);
 
     @Autowired
     private Environment environment;
 
-    @Override
-    protected String getKeyspaceName() {
-        return environment.getProperty("cassandra.keyspace");
+    @Bean
+    public CqlSessionFactoryBean session() {
+
+        CqlSessionFactoryBean session = new CqlSessionFactoryBean();
+        session.setContactPoints(environment.getProperty("cassandra.contactpoints"));
+        session.setKeyspaceName(environment.getProperty("cassandra.keyspace"));
+
+        return session;
     }
 
-    @Override
     @Bean
-    public CassandraClusterFactoryBean cluster() {
-        final CassandraClusterFactoryBean cluster = new CassandraClusterFactoryBean();
-        cluster.setContactPoints(environment.getProperty("cassandra.contactpoints"));
-        cluster.setPort(Integer.parseInt(environment.getProperty("cassandra.port")));
-        LOGGER.info("Cluster created with contact points [" + environment.getProperty("cassandra.contactpoints") + "] " + "& port [" + Integer.parseInt(environment.getProperty("cassandra.port")) + "].");
-        return cluster;
+    public SessionFactoryFactoryBean sessionFactory(CqlSession session, CassandraConverter converter) {
+
+        SessionFactoryFactoryBean sessionFactory = new SessionFactoryFactoryBean();
+        sessionFactory.setSession(session);
+        sessionFactory.setConverter(converter);
+        sessionFactory.setSchemaAction(SchemaAction.NONE);
+
+        return sessionFactory;
     }
 
-    @Override
+
     @Bean
-    public CassandraMappingContext cassandraMapping() throws ClassNotFoundException {
-        return new BasicCassandraMappingContext();
+    public CassandraConverter converter(CqlSession cqlSession, CassandraMappingContext mappingContext) {
+
+        MappingCassandraConverter cassandraConverter = new MappingCassandraConverter(mappingContext);
+        cassandraConverter.setUserTypeResolver(new SimpleUserTypeResolver(cqlSession));
+
+        return cassandraConverter;
+    }
+
+
+    @Bean
+    public CassandraMappingContext mappingContext() throws ClassNotFoundException {
+        return new CassandraMappingContext();
     }
 }
