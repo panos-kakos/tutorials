@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cassandra.core.cql.CqlIdentifier;
+import org.springframework.data.cassandra.core.cql.CqlIdentifier;
 import org.springframework.data.cassandra.core.CassandraAdminOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -48,7 +48,7 @@ public class SpringContextTest {
 
     @Before
     public void createTable() {
-        adminTemplate.createTable(true, CqlIdentifier.cqlId(DATA_TABLE_NAME), Book.class, new HashMap<>());
+        adminTemplate.createTable(true, CqlIdentifier.cqlId(DATA_TABLE_NAME).toCqlIdentifier(), Book.class, new HashMap<>());
     }
 
 	@Test
@@ -57,7 +57,7 @@ public class SpringContextTest {
 
 	@After
     public void dropTable() {
-        adminTemplate.dropTable(CqlIdentifier.cqlId(DATA_TABLE_NAME));
+        adminTemplate.dropTable(CqlIdentifier.cqlId(DATA_TABLE_NAME).getClass());
     }
 
     @AfterClass

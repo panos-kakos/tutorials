@@ -63,15 +63,7 @@ public class BookRepositoryLiveTest {
 
     @BeforeAll
     public static void startCassandraEmbedded() throws InterruptedException, TTransportException, ConfigurationException, IOException {
-//        EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-//        LOGGER.info("Server Started at 127.0.0.1:9142... ");
-//
-//        session.execute(KEYSPACE_CREATION_QUERY);
-//        session.execute(KEYSPACE_ACTIVATE_QUERY);
-//        LOGGER.info("KeySpace created and activated.");
-//        Thread.sleep(5000);
 
-        // Set client mode to avoid configuration loading issues
         System.setProperty("cassandra.config.loader", "org.apache.cassandra.config.YamlConfigurationLoader");
         System.setProperty("cassandra.storagedir", "target/embedded-cassandra");
         System.setProperty("cassandra.unsafesystem", "true");

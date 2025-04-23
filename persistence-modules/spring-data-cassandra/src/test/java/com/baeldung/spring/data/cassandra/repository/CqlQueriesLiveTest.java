@@ -4,7 +4,7 @@ import com.baeldung.spring.data.cassandra.config.CassandraConfig;
 import com.baeldung.spring.data.cassandra.model.Book;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
@@ -19,7 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cassandra.core.cql.CqlIdentifier;
+import org.springframework.data.cassandra.core.cql.CqlIdentifier;
 import org.springframework.data.cassandra.core.CassandraAdminOperations;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
@@ -77,10 +77,10 @@ public class CqlQueriesLiveTest {
     @Test
     public void whenSavingBook_thenAvailableOnRetrieval_usingQueryBuilder() {
         final UUID uuid = UUIDs.timeBased();
-        final Insert insert = QueryBuilder.insertInto(DATA_TABLE_NAME).value("id", uuid).value("title", "Head First Java").value("publisher", "OReilly Media").value("tags", ImmutableSet.of("Software"));
-        cassandraTemplate.execute(insert);
+        final Statement insert = QueryBuilder.insertInto(DATA_TABLE_NAME).value("id", uuid).value("title", "Head First Java").value("publisher", "OReilly Media").value("tags", ImmutableSet.of("Software"));
+        cassandraTemplate.execute((com.datastax.oss.driver.api.core.cql.Statement<?>) insert);
         final Select select = QueryBuilder.select().from("book").limit(10);
-        final Book retrievedBook = cassandraTemplate.selectOne(select, Book.class);
+        final Book retrievedBook = cassandraTemplate.selectOne((com.datastax.oss.driver.api.core.cql.Statement<?>) select, Book.class);
         assertEquals(uuid, retrievedBook.getId());
     }
 

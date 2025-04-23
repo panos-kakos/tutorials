@@ -4,31 +4,28 @@ import com.baeldung.spring.data.cassandra.config.CassandraConfig;
 import com.baeldung.spring.data.cassandra.model.Book;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.google.common.collect.ImmutableSet;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.thrift.transport.TTransportException;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cassandra.core.cql.CqlIdentifier;
-import org.springframework.data.cassandra.core.CassandraAdminOperations;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import org.springframework.data.cassandra.core.CassandraAdminTemplate;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+
 import java.util.List;
 
 import static junit.framework.TestCase.assertNull;
@@ -44,8 +41,7 @@ import static org.junit.Assert.assertEquals;
  *
  * Open cassandra-unit issue for parallel execution: https://github.com/jsevellec/cassandra-unit/issues/155
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = CassandraConfig.class)
+@SpringBootTest(classes = CassandraConfig.class)
 public class CassandraTemplateLiveTest {
     private static final Log LOGGER = LogFactory.getLog(CassandraTemplateLiveTest.class);
 
@@ -56,12 +52,12 @@ public class CassandraTemplateLiveTest {
     public static final String DATA_TABLE_NAME = "book";
 
     @Autowired
-    private CassandraAdminOperations adminTemplate;
+    private CassandraAdminTemplate adminTemplate;
 
     @Autowired
     private CassandraOperations cassandraTemplate;
 
-    @BeforeClass
+    @BeforeAll
     public static void startCassandraEmbedded() throws InterruptedException, TTransportException, ConfigurationException, IOException {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
         final Cluster cluster = Cluster.builder().addContactPoints("127.0.0.1").withPort(9142).build();
@@ -73,17 +69,24 @@ public class CassandraTemplateLiveTest {
         Thread.sleep(5000);
     }
 
-    @Before
+    @BeforeEach
     public void createTable() {
-        adminTemplate.createTable(true, CqlIdentifier.cqlId(DATA_TABLE_NAME), Book.class, new HashMap<>());
+        adminTemplate.createTable(true, Book.class);
     }
 
     @Test
     public void whenSavingBook_thenAvailableOnRetrieval() {
         final Book javaBook = new Book(UUIDs.timeBased(), "Head First Java", "O'Reilly Media", ImmutableSet.of("Computer", "Software"));
         cassandraTemplate.insert(javaBook);
-        final Select select = QueryBuilder.select().from("book").where(QueryBuilder.eq("title", "Head First Java")).and(QueryBuilder.eq("publisher", "O'Reilly Media")).limit(10);
-        final Book retrievedBook = cassandraTemplate.selectOne(select, Book.class);
+
+        Select select = QueryBuilder.selectFrom(DATA_TABLE_NAME)
+                .all()
+                .whereColumn("title").isEqualTo(QueryBuilder.literal("Head First Java"))
+                .whereColumn("publisher").isEqualTo(QueryBuilder.literal("O'Reilly Media"))
+                .limit(10);
+
+        final Book retrievedBook = cassandraTemplate.selectOne(
+                SimpleStatement.newInstance(select.build().getQuery()), Book.class);
         assertEquals(javaBook.getId(), retrievedBook.getId());
     }
 
@@ -96,8 +99,9 @@ public class CassandraTemplateLiveTest {
         bookList.add(dPatternBook);
         cassandraTemplate.insert(bookList);
 
-        final Select select = QueryBuilder.select().from("book").limit(10);
-        final List<Book> retrievedBooks = cassandraTemplate.select(select, Book.class);
+        Select select = QueryBuilder.selectFrom(DATA_TABLE_NAME).all().limit(10);
+        final List<Book> retrievedBooks = cassandraTemplate.select(
+                SimpleStatement.newInstance(select.build().getQuery()), Book.class);
         assertThat(retrievedBooks.size(), is(2));
         assertEquals(javaBook.getId(), retrievedBooks.get(0).getId());
         assertEquals(dPatternBook.getId(), retrievedBooks.get(1).getId());
@@ -107,11 +111,13 @@ public class CassandraTemplateLiveTest {
     public void whenUpdatingBook_thenShouldUpdatedOnRetrieval() {
         final Book javaBook = new Book(UUIDs.timeBased(), "Head First Java", "O'Reilly Media", ImmutableSet.of("Computer", "Software"));
         cassandraTemplate.insert(javaBook);
-        final Select select = QueryBuilder.select().from("book").limit(10);
-        final Book retrievedBook = cassandraTemplate.selectOne(select, Book.class);
+        Select select = QueryBuilder.selectFrom(DATA_TABLE_NAME).all().limit(10);
+        final Book retrievedBook = cassandraTemplate.selectOne(
+                SimpleStatement.newInstance(select.build().getQuery()), Book.class);
         retrievedBook.setTags(ImmutableSet.of("Java", "Programming"));
         cassandraTemplate.update(retrievedBook);
-        final Book retrievedUpdatedBook = cassandraTemplate.selectOne(select, Book.class);
+        final Book retrievedUpdatedBook = cassandraTemplate.selectOne(
+                SimpleStatement.newInstance(select.build().getQuery()), Book.class);
         assertEquals(retrievedBook.getTags(), retrievedUpdatedBook.getTags());
     }
 
@@ -120,8 +126,9 @@ public class CassandraTemplateLiveTest {
         final Book javaBook = new Book(UUIDs.timeBased(), "Head First Java", "OReilly Media", ImmutableSet.of("Computer", "Software"));
         cassandraTemplate.insert(javaBook);
         cassandraTemplate.delete(javaBook);
-        final Select select = QueryBuilder.select().from("book").limit(10);
-        final Book retrievedUpdatedBook = cassandraTemplate.selectOne(select, Book.class);
+        Select select = QueryBuilder.selectFrom(DATA_TABLE_NAME).all().limit(10);
+        final Book retrievedUpdatedBook = cassandraTemplate.selectOne(
+                SimpleStatement.newInstance(select.build().getQuery()), Book.class);
         assertNull(retrievedUpdatedBook);
     }
 
@@ -131,9 +138,10 @@ public class CassandraTemplateLiveTest {
         final Book dPatternBook = new Book(UUIDs.timeBased(), "Head Design Patterns", "O'Reilly Media", ImmutableSet.of("Computer", "Software"));
         cassandraTemplate.insert(javaBook);
         cassandraTemplate.insert(dPatternBook);
-        cassandraTemplate.deleteAll(Book.class);
-        final Select select = QueryBuilder.select().from("book").limit(10);
-        final Book retrievedUpdatedBook = cassandraTemplate.selectOne(select, Book.class);
+        cassandraTemplate.delete(Book.class);
+        Select select = QueryBuilder.selectFrom(DATA_TABLE_NAME).all().limit(10);
+        final Book retrievedUpdatedBook = cassandraTemplate.selectOne(
+                SimpleStatement.newInstance(select.build().getQuery()), Book.class);
         assertNull(retrievedUpdatedBook);
     }
 
@@ -147,12 +155,12 @@ public class CassandraTemplateLiveTest {
         assertEquals(2, bookCount);
     }
 
-    @After
+    @AfterEach
     public void dropTable() {
-        adminTemplate.dropTable(CqlIdentifier.cqlId(DATA_TABLE_NAME));
+        adminTemplate.dropTable(Book.class);
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopCassandraEmbedded() {
         EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
     }
