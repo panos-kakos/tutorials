@@ -1,9 +1,9 @@
 package com.baeldung.boot.problem.problems;
 
-import java.net.URI;
-
 import org.zalando.problem.AbstractThrowableProblem;
 import org.zalando.problem.Status;
+
+import java.net.URI;
 
 public class TaskNotFoundProblem extends AbstractThrowableProblem {
 
